@@ -1,0 +1,633 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>고급 대수 단원평가</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="vendor/katex.css">
+<link rel="stylesheet" href="app.css">
+<style>
+/* ===== 로그인 ===== */
+#login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px 16px}
+.sheet{background:var(--card);width:100%;max-width:640px;border:1px solid var(--rule);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.sheet-head{padding:34px 40px 26px;border-bottom:1px solid var(--rule)}
+.eyebrow{font-size:14px;letter-spacing:.14em;color:var(--muted);font-weight:600}
+.sheet-head h1{margin:10px 0 4px;font-size:34px;letter-spacing:-.02em;line-height:1.25}
+.sheet-head p{margin:0;color:var(--ink-2)}
+.sheet-body{padding:28px 40px 34px;display:flex;flex-direction:column;gap:22px}
+.units{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.unit-opt{position:relative;border:1px solid var(--rule);border-radius:10px;padding:16px 18px 15px;background:#fff;text-align:left;transition:border-color .15s,background .15s}
+.unit-opt:hover{border-color:#c8c2b6}
+.unit-opt .u-no{font-size:14px;color:var(--muted);font-weight:600;letter-spacing:.06em}
+.unit-opt .u-name{display:block;font-size:20px;font-weight:700;margin-top:2px}
+.unit-opt .u-sub{display:block;font-size:14.5px;color:var(--muted);margin-top:4px;line-height:1.45}
+.unit-opt[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent)}
+.two{display:grid;grid-template-columns:1fr 1.3fr;gap:14px}
+.notice{font-size:15px;color:var(--muted);line-height:1.55;border-top:1px solid var(--rule-2);padding-top:16px}
+.notice b{color:var(--ink-2);font-weight:600}
+.err{color:var(--err);font-size:15px;min-height:22px}
+.resume{display:none;align-items:center;justify-content:space-between;gap:12px;background:var(--tint);border:1px solid var(--rule-2);border-radius:10px;padding:12px 16px}
+.resume.show{display:flex}
+
+/* ===== 시험 화면 ===== */
+#exam{display:none}
+.topbar{position:sticky;top:0;z-index:30;background:rgba(242,240,235,.96);backdrop-filter:saturate(1.2) blur(6px);border-bottom:1px solid var(--rule)}
+.topbar-in{max-width:1080px;margin:0 auto;padding:10px 20px;display:flex;align-items:center;gap:18px}
+.tb-title{display:flex;flex-direction:column;line-height:1.25;min-width:0}
+.tb-title b{font-size:17px;white-space:nowrap}
+.tb-title span{font-size:14px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tb-spacer{flex:1}
+.who{font-size:15.5px;color:var(--ink-2);white-space:nowrap}
+.who b{font-weight:700;color:var(--ink)}
+.status{display:flex;align-items:center;gap:7px;font-size:14px;color:var(--muted);white-space:nowrap}
+.status i{width:8px;height:8px;border-radius:50%;background:var(--ok);display:inline-block}
+.status.saving i{background:var(--warn)} .status.off i{background:var(--err)}
+.clock{font-size:15px;color:var(--ink-2);font-variant-numeric:tabular-nums;white-space:nowrap}
+.navstrip{max-width:1080px;margin:0 auto;padding:0 20px 10px;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+.navstrip::-webkit-scrollbar{display:none}
+.qchip{flex:none;width:52px;height:44px;border-radius:8px;border:1px solid var(--rule);background:#fff;font-weight:700;font-size:16px;position:relative;color:var(--ink-2)}
+.qchip small{position:absolute;left:6px;top:3px;font-size:10.5px;font-weight:700;letter-spacing:.02em}
+.qchip small[data-lv="하"]{color:var(--lv-1)} .qchip small[data-lv="중"]{color:var(--lv-2)} .qchip small[data-lv="상"]{color:var(--lv-3)}
+.qchip span{display:block;margin-top:8px}
+.qchip.has{background:var(--accent-soft);border-color:#c3cfdf;color:var(--accent)}
+.qchip.cur{border-color:var(--accent);box-shadow:inset 0 0 0 1.5px var(--accent);color:var(--accent)}
+.qchip.hint::after{content:'';position:absolute;right:6px;top:6px;width:6px;height:6px;border-radius:50%;background:var(--warn)}
+
+main.wrap{max-width:1080px;margin:0 auto;padding:22px 20px 60px}
+.qcard{background:var(--card);border:1px solid var(--rule);border-radius:var(--radius);box-shadow:var(--shadow)}
+.qhead{display:flex;align-items:flex-end;gap:16px;padding:24px 30px 18px;border-bottom:1px solid var(--rule-2)}
+.qnum{font-size:44px;font-weight:800;letter-spacing:-.03em;line-height:.9;color:var(--accent);font-variant-numeric:tabular-nums}
+.qmeta{display:flex;flex-direction:column;gap:6px;padding-bottom:2px}
+.qmeta .t{font-size:19px;font-weight:700}
+.qmeta .r{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--muted)}
+.qtext{padding:22px 30px 6px;font-size:21px;line-height:1.85}
+.qtext ol.sub{margin:10px 0 0;padding-left:1.6em}
+.qtext ol.sub li{margin:6px 0;padding-left:.2em}
+.qtext ol.sub li::marker{font-weight:700;color:var(--ink-2)}
+.qtext ol.sub{list-style:none;counter-reset:s}
+.qtext ol.sub li{counter-increment:s;position:relative}
+.qtext ol.sub li::before{content:'(' counter(s) ')';position:absolute;left:-1.7em;font-weight:600;color:var(--ink-2)}
+
+.aid{margin:16px 30px 0;display:grid;grid-template-columns:1fr;gap:10px}
+.concept{border-left:3px solid var(--accent);background:var(--tint);padding:14px 18px;border-radius:0 8px 8px 0;font-size:17.5px;line-height:1.75}
+.concept .k{font-size:13.5px;font-weight:700;letter-spacing:.12em;color:var(--accent);display:block;margin-bottom:4px}
+.concept ul{margin:6px 0 0;padding-left:1.2em}
+.hints{display:flex;flex-direction:column;gap:8px}
+.hintbtn{align-self:flex-start;height:40px;border-radius:7px;border:1px dashed #c9b48a;background:#fffaf0;color:#7a5410;font-weight:600;font-size:15.5px;padding:0 14px;display:inline-flex;align-items:center;gap:8px}
+.hintbtn:hover{background:#fcf2dc}
+.hint{border:1px solid #ecdcb7;background:#fffbf2;border-radius:8px;padding:12px 16px;font-size:17.5px;line-height:1.75}
+.hint .k{font-size:13.5px;font-weight:700;letter-spacing:.1em;color:#8a6417;display:block;margin-bottom:2px}
+
+.answer{margin:22px 30px 0;padding-top:20px;border-top:1px solid var(--rule-2)}
+.answer h4{margin:0 0 8px;font-size:15px;letter-spacing:.1em;color:var(--muted);font-weight:700}
+.final-row{display:flex;flex-direction:column;gap:8px}
+.preview{min-height:30px;font-size:19px;color:var(--ink);padding:2px 2px;white-space:pre-wrap}
+.preview:empty::before{content:attr(data-empty);color:var(--faint);font-size:15px}
+.preview-box{border:1px solid var(--rule-2);background:#fcfbf9;border-radius:8px;padding:10px 14px}
+.preview-box .lbl{font-size:12.5px;color:var(--faint);font-weight:700;letter-spacing:.1em;display:block;margin-bottom:2px}
+
+.work{margin:22px 30px 26px}
+.seg{display:inline-flex;border:1px solid var(--rule);border-radius:9px;padding:3px;background:var(--tint);gap:3px}
+.seg button{height:40px;padding:0 16px;border:0;border-radius:7px;background:transparent;font-weight:600;font-size:16px;color:var(--ink-2);display:inline-flex;align-items:center;gap:8px}
+.seg button[aria-selected="true"]{background:#fff;color:var(--accent);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.seg svg{width:18px;height:18px}
+.work-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.work-note{font-size:14px;color:var(--muted)}
+.mathbar{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.mathbar button{height:36px;min-width:42px;padding:0 10px;border:1px solid var(--rule);border-radius:6px;background:#fff;font-size:15px;color:var(--ink-2)}
+.mathbar button:hover{background:var(--tint)}
+.mathbar .sep{width:1px;background:var(--rule);margin:4px 4px}
+.panel[hidden]{display:none}
+
+/* 손글씨 */
+.padtools{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:8px}
+.tool{height:38px;min-width:40px;padding:0 10px;border:1px solid var(--rule);border-radius:7px;background:#fff;display:inline-flex;align-items:center;justify-content:center;gap:6px;font-size:14.5px;color:var(--ink-2)}
+.tool[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);color:var(--accent);background:var(--accent-soft)}
+.tool svg{width:18px;height:18px}
+.sw{width:18px;height:18px;border-radius:50%;display:inline-block;border:1px solid rgba(0,0,0,.15)}
+.tool .dotw{display:inline-block;border-radius:50%;background:var(--ink-2)}
+.padwrap{border:1px solid var(--rule);border-radius:8px;background:#fff;overflow:hidden;position:relative}
+canvas.pad{display:block;width:100%;touch-action:none;cursor:crosshair}
+.padfoot{display:flex;justify-content:space-between;align-items:center;margin-top:8px;gap:10px;flex-wrap:wrap}
+.toggle{display:inline-flex;align-items:center;gap:8px;font-size:14.5px;color:var(--ink-2);cursor:pointer;user-select:none}
+.toggle input{width:18px;height:18px;accent-color:var(--accent)}
+
+.qnav{display:flex;justify-content:space-between;align-items:center;margin-top:18px;gap:12px}
+.qnav .mid{font-size:15px;color:var(--muted)}
+.locked .answer input,.locked .answer textarea{pointer-events:none;background:#f6f5f2}
+
+/* 제출 완료 */
+#done{display:none;min-height:80vh;align-items:center;justify-content:center;padding:32px 16px}
+#done .sheet-body{gap:14px}
+.sumgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:6px}
+.sumgrid div{border:1px solid var(--rule);border-radius:8px;text-align:center;padding:8px 0;font-weight:700;color:var(--muted)}
+.sumgrid div.has{background:var(--accent-soft);color:var(--accent);border-color:#c3cfdf}
+
+@media (max-width:760px){
+  body{font-size:17px}
+  .sheet-head,.sheet-body{padding-left:22px;padding-right:22px}
+  .units,.two{grid-template-columns:1fr}
+  .topbar-in{padding:8px 16px;display:grid;grid-template-columns:minmax(0,1fr) auto auto;grid-template-areas:'t c s' 'w st st';gap:4px 12px;align-items:center}
+  .tb-title{grid-area:t} .tb-title span{display:none} .tb-spacer{display:none}
+  .clock{grid-area:c} #submitBtn{grid-area:s}
+  .who{grid-area:w;font-size:14.5px;overflow:hidden;text-overflow:ellipsis} .status{grid-area:st;justify-self:end}
+  main.wrap{padding:16px 12px 48px}
+  .qhead{padding:18px 18px 14px} .qtext{padding:16px 18px 4px;font-size:19.5px}
+  .aid,.answer,.work{margin-left:18px;margin-right:18px}
+  .qnum{font-size:36px}
+  .navstrip{padding:0 16px 8px}
+}
+@media print{.topbar,.qnav,.padtools,.mathbar,.hintbtn{display:none}}
+</style>
+</head>
+<body>
+<div id="demo" class="demo-strip" hidden><b>데모 모드</b> — 서버에 연결되지 않아 이 기기 안에만 저장됩니다. (config.js 설정 후 실제 수업에 사용하세요)</div>
+
+<!-- ===================== 로그인 ===================== -->
+<section id="login">
+  <div class="sheet">
+    <div class="sheet-head">
+      <div class="eyebrow" id="lg-eyebrow">고급 대수 · 단원평가</div>
+      <h1>단원평가</h1>
+      <p>학번과 이름을 입력하고 단원을 고른 뒤 시작하세요.</p>
+    </div>
+    <div class="sheet-body">
+      <div class="resume" id="resume">
+        <div><b id="resume-who"></b><div class="small muted" id="resume-sub"></div></div>
+        <button class="btn primary small" id="resume-go">이어서 풀기</button>
+      </div>
+      <div class="field">
+        <label>단원</label>
+        <div class="units" id="units"></div>
+      </div>
+      <div class="two">
+        <div class="field"><label for="sno">학번</label><input class="input mono" id="sno" inputmode="numeric" autocomplete="off" placeholder="예: 20315"></div>
+        <div class="field"><label for="sname">이름</label><input class="input" id="sname" autocomplete="off" placeholder="이름"></div>
+      </div>
+      <div class="err" id="lg-err" role="alert"></div>
+      <button class="btn primary" id="start" style="height:54px;font-size:18px">시작하기</button>
+      <div class="notice">
+        <b>안내</b> — 작성한 답과 풀이는 자동으로 저장되며 선생님 화면에 실시간으로 표시됩니다.
+        접속·이탈·힌트 열람 시각도 함께 기록됩니다. 컴퓨터는 <b>키보드 풀이</b>, 태블릿은 <b>펜 풀이</b> 칸을 쓰면 편리합니다.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 시험 ===================== -->
+<section id="exam">
+  <header class="topbar">
+    <div class="topbar-in">
+      <div class="tb-title"><b id="tb-course">고급 대수 단원평가</b><span id="tb-unit"></span></div>
+      <div class="tb-spacer"></div>
+      <div class="who" id="who"></div>
+      <div class="status" id="status"><i></i><span>저장됨</span></div>
+      <div class="clock" id="clock">00:00</div>
+      <button class="btn primary small" id="submitBtn">제출</button>
+    </div>
+    <nav class="navstrip" id="navstrip" aria-label="문항 이동"></nav>
+  </header>
+  <main class="wrap">
+    <article class="qcard" id="qcard"></article>
+    <div class="qnav">
+      <button class="btn" id="prev">‹ 이전 문제</button>
+      <span class="mid" id="qpos"></span>
+      <button class="btn" id="next">다음 문제 ›</button>
+    </div>
+  </main>
+</section>
+
+<!-- ===================== 제출 완료 ===================== -->
+<section id="done">
+  <div class="sheet">
+    <div class="sheet-head">
+      <div class="eyebrow">제출 완료</div>
+      <h1>수고했습니다</h1>
+      <p id="done-sub"></p>
+    </div>
+    <div class="sheet-body">
+      <div class="small muted">문항별 작성 현황</div>
+      <div class="sumgrid" id="sumgrid"></div>
+      <div class="notice">답안은 선생님께 전달되었습니다. 이 창은 닫아도 됩니다.</div>
+    </div>
+  </div>
+</section>
+
+<div class="modal-bg" id="modal">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="m-title">
+    <h3 id="m-title"></h3>
+    <div id="m-body" class="muted"></div>
+    <div class="row" id="m-row"></div>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script src="vendor/supabase.js"></script>
+<script src="vendor/katex.js"></script>
+<script src="problems.js"></script>
+<script src="db.js"></script>
+<script>
+(function(){
+'use strict';
+const CFG = window.EXAM_CONFIG || {};
+const DB = window.ExamDB;
+const EXAM = window.EXAM;
+const $ = s => document.querySelector(s);
+const el = (tag, attrs, html) => { const e = document.createElement(tag); if (attrs) for (const k in attrs) { if (k === 'class') e.className = attrs[k]; else if (k.startsWith('on')) e.addEventListener(k.slice(2), attrs[k]); else e.setAttribute(k, attrs[k]); } if (html != null) e.innerHTML = html; return e; };
+const ICON = {
+  key:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></svg>',
+  pen:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16.5 3.5l4 4L8 20H4v-4z"/><path d="M14 6l4 4"/></svg>',
+  eraser:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 21h13M5.5 15.5l9-9a2 2 0 0 1 2.8 0l2.2 2.2a2 2 0 0 1 0 2.8L12 19H8.5z"/></svg>',
+  undo:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg>',
+  redo:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14l5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h3"/></svg>',
+  trash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>',
+  plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  bulb:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg>'
+};
+
+/* ---------------- 상태 ---------------- */
+const S = { unit: 1, student: null, answers: {}, cur: 1, startedAt: null, dirty: new Set(), saving: false, online: true, locked: false };
+const LS = { get(k, d){ try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch(e){ return d; } },
+             set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} } };
+const PROFILE_KEY = 'exam-profile';
+const backupKey = () => 'exam-backup-' + (S.student ? S.student.id : 'x');
+
+function typeset(node){
+  if (!window.renderMathInElement) return;
+  try { renderMathInElement(node, { delimiters:[{left:'$$',right:'$$',display:true},{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true},{left:'$',right:'$',display:false}], throwOnError:false, strict:false }); } catch(e){}
+}
+function deviceInfo(){
+  const ua = navigator.userAgent;
+  const touch = navigator.maxTouchPoints > 1;
+  let d = 'PC';
+  if (/iPad/.test(ua) || (/Macintosh/.test(ua) && touch)) d = '태블릿 (iPad)';
+  else if (/Android/.test(ua) && !/Mobile/.test(ua)) d = '태블릿 (Android)';
+  else if (/Mobi|iPhone|Android/.test(ua)) d = '휴대폰';
+  else if (/CrOS/.test(ua)) d = '크롬북';
+  let b = /Edg\//.test(ua) ? 'Edge' : /Whale/.test(ua) ? 'Whale' : /SamsungBrowser/.test(ua) ? '삼성 인터넷' : /Chrome\//.test(ua) ? 'Chrome' : /Safari\//.test(ua) ? 'Safari' : /Firefox\//.test(ua) ? 'Firefox' : '기타';
+  return { device: d + ' · ' + b, isTablet: d.startsWith('태블릿') || d === '휴대폰' };
+}
+const isTabletLike = deviceInfo().isTablet;
+
+/* ---------------- 로그인 화면 ---------------- */
+function buildLogin(){
+  if (DB.mode === 'demo') $('#demo').hidden = false;
+  const course = CFG.COURSE_NAME || '고급 대수';
+  $('#lg-eyebrow').textContent = (CFG.SCHOOL_NAME ? CFG.SCHOOL_NAME + ' · ' : '') + course + ' · 단원평가';
+  const qp = new URLSearchParams(location.search); const u = parseInt(qp.get('unit'), 10);
+  if (u === 1 || u === 2) S.unit = u;
+  const box = $('#units'); box.innerHTML = '';
+  [1, 2].forEach(n => {
+    const U = EXAM.units[n];
+    const b = el('button', { class: 'unit-opt', type: 'button', 'aria-pressed': String(S.unit === n) },
+      `<span class="u-no">${n}단원 · 10문항</span><span class="u-name">${U.name}</span><span class="u-sub">${U.intro}</span>`);
+    b.onclick = () => { S.unit = n; box.querySelectorAll('.unit-opt').forEach((x, i) => x.setAttribute('aria-pressed', String(i + 1 === n))); checkResume(); };
+    box.appendChild(b);
+  });
+  const prof = LS.get(PROFILE_KEY, null);
+  if (prof) { $('#sno').value = prof.student_no || ''; $('#sname').value = prof.name || ''; }
+  $('#start').onclick = () => startExam(false);
+  $('#sname').addEventListener('keydown', e => { if (e.key === 'Enter') startExam(); });
+  checkResume();
+}
+async function checkResume(){
+  const r = $('#resume'); r.classList.remove('show');
+  try {
+    const s = await DB.findMyStudent(S.unit);
+    if (s) {
+      $('#resume-who').textContent = `${s.student_no} ${s.name}`;
+      $('#resume-sub').textContent = `${EXAM.units[S.unit].name} — ${s.submitted_at ? '제출 완료' : '작성 중인 답안이 있습니다'}`;
+      r.classList.add('show');
+      $('#resume-go').onclick = () => { $('#sno').value = s.student_no; $('#sname').value = s.name; startExam(true); };
+    }
+  } catch(e) { /* 무시 */ }
+}
+async function startExam(resume){
+  const sno = $('#sno').value.trim(), name = $('#sname').value.trim();
+  const re = new RegExp(CFG.STUDENT_NO_PATTERN || '^.{1,20}$');
+  if (!re.test(sno)) { $('#lg-err').textContent = '학번을 확인해 주세요. (숫자로 입력)'; $('#sno').focus(); return; }
+  if (!name || name.length > 30) { $('#lg-err').textContent = '이름을 입력해 주세요.'; $('#sname').focus(); return; }
+  $('#lg-err').textContent = ''; $('#start').disabled = true; $('#start').textContent = '연결 중…';
+  try {
+    const di = deviceInfo();
+    S.student = await DB.startStudent({ unit: S.unit, student_no: sno, name, device: di.device, user_agent: navigator.userAgent.slice(0, 300) });
+    LS.set(PROFILE_KEY, { student_no: sno, name });
+    const rows = await DB.loadMyAnswers(S.student.id);
+    const backup = LS.get(backupKey(), {});
+    S.answers = {};
+    EXAM.units[S.unit].questions.forEach(q => { S.answers[q.no] = { final_answer: '', typed: '', strokes: [], pad_height: 600, mode: isTabletLike ? 'pen' : 'type', hint_level: 0 }; });
+    rows.forEach(r => { S.answers[r.qno] = { final_answer: r.final_answer || '', typed: r.typed || '', strokes: r.strokes || [], pad_height: r.pad_height || 600, mode: r.mode || 'type', hint_level: r.hint_level || 0, updated_at: r.updated_at }; });
+    // 서버보다 최신인 기기 백업이 있으면 복원 (네트워크가 끊겼던 경우)
+    Object.keys(backup).forEach(k => { const b = backup[k], a = S.answers[k]; if (a && b && b._t && (!a.updated_at || b._t > Date.parse(a.updated_at) + 1000)) { Object.assign(a, b); S.dirty.add(+k); } });
+    S.startedAt = Date.parse(S.student.first_seen) || Date.now();
+    S.cur = Math.min(10, Math.max(1, S.student.current_q || 1));
+    DB.logEvent(S.student.id, (rows.length || resume === true) ? 'resume' : 'login', { device: di.device, screen: `${screen.width}×${screen.height}` }).catch(()=>{});
+    if (S.student.submitted_at) { showDone(); return; }
+    enterExam();
+  } catch(e) {
+    console.error(e);
+    $('#lg-err').textContent = '서버에 연결하지 못했습니다. 잠시 뒤 다시 시도하세요. (' + (e.message || e) + ')';
+  } finally { $('#start').disabled = false; $('#start').textContent = '시작하기'; }
+}
+
+/* ---------------- 시험 화면 ---------------- */
+function enterExam(){
+  $('#login').style.display = 'none'; $('#exam').style.display = 'block';
+  const U = EXAM.units[S.unit];
+  $('#tb-course').textContent = (CFG.COURSE_NAME || '고급 대수') + ' 단원평가';
+  $('#tb-unit').textContent = `${S.unit}단원 · ${U.name} · ${U.range}`;
+  $('#who').innerHTML = `<b>${esc(S.student.student_no)}</b> ${esc(S.student.name)}`;
+  buildNav(); renderQ();
+  $('#prev').onclick = () => go(S.cur - 1); $('#next').onclick = () => go(S.cur + 1);
+  $('#submitBtn').onclick = askSubmit;
+  setInterval(tickClock, 1000); tickClock();
+  setInterval(() => flush(), 4000);
+  heartbeat(); setInterval(heartbeat, 20000);
+  watchPresence();
+  if (S.dirty.size) flush();
+}
+function esc(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function tickClock(){
+  const s = Math.max(0, Math.floor((Date.now() - S.startedAt) / 1000));
+  const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), ss = s % 60;
+  $('#clock').textContent = (h ? h + ':' : '') + String(m).padStart(2, '0') + ':' + String(ss).padStart(2, '0');
+}
+function hasWork(a){ return !!(a && ((a.final_answer || '').trim() || (a.typed || '').trim() || (a.strokes && a.strokes.length))); }
+function buildNav(){
+  const box = $('#navstrip'); box.innerHTML = '';
+  EXAM.units[S.unit].questions.forEach(q => {
+    const b = el('button', { class: 'qchip', type: 'button', 'aria-label': `${q.no}번 (${q.level})` }, `<small data-lv="${q.level}">${q.level}</small><span>${q.no}</span>`);
+    b.onclick = () => go(q.no); box.appendChild(b);
+  });
+  refreshNav();
+}
+function refreshNav(){
+  [...$('#navstrip').children].forEach((b, i) => {
+    const a = S.answers[i + 1];
+    b.classList.toggle('cur', S.cur === i + 1); b.classList.toggle('has', hasWork(a)); b.classList.toggle('hint', a && a.hint_level > 0);
+  });
+  $('#qpos').textContent = `${S.cur} / 10`;
+  $('#prev').disabled = S.cur <= 1; $('#next').disabled = S.cur >= 10;
+}
+function go(n){
+  if (n < 1 || n > 10 || n === S.cur) return;
+  flush(); S.cur = n; renderQ(); window.scrollTo({ top: 0, behavior: 'smooth' });
+  heartbeat();
+}
+
+let pad = null;
+function renderQ(){
+  const q = EXAM.units[S.unit].questions[S.cur - 1], a = S.answers[q.no];
+  const card = $('#qcard'); card.innerHTML = ''; card.classList.toggle('locked', S.locked);
+  card.appendChild(el('div', { class: 'qhead' }, `<div class="qnum">${String(q.no).padStart(2, '0')}</div>
+    <div class="qmeta"><span class="t">${q.topic}</span><span class="r"><span class="lv" data-lv="${q.level}">${q.level}</span><span>교과서 ${q.ref} 유형</span></span></div>`));
+  card.appendChild(el('div', { class: 'qtext' }, q.text));
+  const aid = el('div', { class: 'aid' });
+  aid.appendChild(el('div', { class: 'concept' }, `<span class="k">개념</span>${q.concept}`));
+  const hints = el('div', { class: 'hints' }); aid.appendChild(hints);
+  const drawHints = () => {
+    hints.innerHTML = '';
+    q.hints.forEach((h, i) => { if (i < a.hint_level) { const d = el('div', { class: 'hint' }, `<span class="k">힌트 ${i + 1}</span>${h}`); hints.appendChild(d); typeset(d); } });
+    if (a.hint_level < q.hints.length && !S.locked) {
+      const b = el('button', { class: 'hintbtn', type: 'button' }, `${ICON.bulb} 힌트 ${a.hint_level + 1} 보기`);
+      b.onclick = () => { a.hint_level++; markDirty(q.no); DB.logEvent(S.student.id, 'hint', { qno: q.no, level: a.hint_level }).catch(()=>{}); drawHints(); refreshNav(); flush(); };
+      hints.appendChild(b);
+    }
+  };
+  drawHints(); card.appendChild(aid);
+
+  // 최종 답
+  const ans = el('div', { class: 'answer' });
+  ans.innerHTML = `<h4>최종 답</h4><div class="final-row">
+    <input class="input" id="final" autocomplete="off" placeholder="${esc(q.answerGuide || '답을 입력하세요')}">
+    <div class="preview-box"><span class="lbl">미리보기</span><div class="preview" id="final-pv" data-empty="수식은 \\( \\) 안에 쓰면 예쁘게 보여요. 그냥 글자로 써도 됩니다."></div></div></div>`;
+  card.appendChild(ans);
+  const fin = ans.querySelector('#final'); fin.value = a.final_answer; fin.disabled = S.locked;
+  const fpv = ans.querySelector('#final-pv');
+  const upFinal = () => { fpv.textContent = fin.value; typeset(fpv); };
+  upFinal();
+  fin.addEventListener('input', () => { a.final_answer = fin.value; markDirty(q.no); clearTimeout(fin._t); fin._t = setTimeout(upFinal, 250); });
+  fin.addEventListener('focus', () => { lastField = fin; });
+
+  // 풀이 (키보드 / 펜)
+  const work = el('div', { class: 'work' });
+  work.innerHTML = `<div class="work-head"><div class="seg" role="tablist">
+      <button role="tab" data-m="type">${ICON.key}키보드로 풀이</button>
+      <button role="tab" data-m="pen">${ICON.pen}펜으로 풀이</button></div>
+      <span class="work-note">두 칸 모두 저장됩니다. 편한 쪽을 쓰세요.</span></div>
+    <div class="panel" data-p="type">
+      <div class="mathbar" id="mathbar"></div>
+      <textarea class="input" id="typed" placeholder="풀이 과정을 쓰세요. 예: \\( |\\vec u| = \\sqrt{9} = 3 \\)"></textarea>
+      <div class="preview-box" style="margin-top:8px"><span class="lbl">미리보기</span><div class="preview" id="typed-pv" data-empty="입력한 풀이가 여기에 수식으로 보입니다."></div></div>
+    </div>
+    <div class="panel" data-p="pen">
+      <div class="padtools" id="padtools"></div>
+      <div class="padwrap"><canvas class="pad" id="pad"></canvas></div>
+      <div class="padfoot"><label class="toggle"><input type="checkbox" id="penOnly"> 펜만 인식 (손바닥·손가락 무시)</label>
+        <button class="tool" id="grow" type="button">${ICON.plus}칸 늘리기</button></div>
+    </div>`;
+  card.appendChild(work);
+  const tabs = work.querySelectorAll('.seg button'), panels = work.querySelectorAll('.panel');
+  const setMode = m => { tabs.forEach(t => t.setAttribute('aria-selected', String(t.dataset.m === m))); panels.forEach(p => p.hidden = p.dataset.p !== m); if (m === 'pen' && pad) pad.resize(); };
+  tabs.forEach(t => t.onclick = () => { a.mode = t.dataset.m; markDirty(q.no); setMode(a.mode); });
+
+  const ta = work.querySelector('#typed'), tpv = work.querySelector('#typed-pv');
+  ta.value = a.typed; ta.disabled = S.locked;
+  const upTyped = () => { tpv.textContent = ta.value; typeset(tpv); };
+  upTyped();
+  ta.addEventListener('input', () => { a.typed = ta.value; markDirty(q.no); clearTimeout(ta._t); ta._t = setTimeout(upTyped, 300); });
+  ta.addEventListener('focus', () => { lastField = ta; });
+  lastField = ta;
+  buildMathbar(work.querySelector('#mathbar'));
+
+  pad = new Pad(work.querySelector('#pad'), a, () => { markDirty(q.no); refreshNav(); });
+  buildPadTools(work.querySelector('#padtools'), pad);
+  const po = work.querySelector('#penOnly'); po.checked = LS.get('exam-penonly', false); pad.penOnly = po.checked;
+  po.onchange = () => { pad.penOnly = po.checked; LS.set('exam-penonly', po.checked); };
+  work.querySelector('#grow').onclick = () => { a.pad_height = Math.min(2400, (a.pad_height || 600) + 300); markDirty(q.no); pad.resize(); };
+  setMode(a.mode || 'type');
+  typeset(card.querySelector('.qtext')); typeset(card.querySelector('.concept'));
+  refreshNav();
+}
+
+/* 수식 입력 도우미 */
+let lastField = null;
+const SNIPS = [
+  ['수식', '\\( ', ' \\)'], ['x²', '^{', '}'], ['x₁', '_{', '}'], ['√', '\\sqrt{', '}'], ['분수', '\\frac{', '}{}'],
+  ['벡터', '\\vec{', '}'], ['|', '|', '|'], 'sep',
+  ['행렬', '\\begin{pmatrix} ', ' & \\\\  & \\end{pmatrix}'], ['행렬식', '\\begin{vmatrix} ', ' & \\\\  & \\end{vmatrix}'], ['A⁻¹', '^{-1}', ''], 'sep',
+  ['π', '\\pi ', ''], ['θ', '\\theta ', ''], ['·', '\\cdot ', ''], ['≤', '\\le ', ''], ['≠', '\\ne ', ''], ['→', '\\to ', '']
+];
+function buildMathbar(bar){
+  SNIPS.forEach(s => {
+    if (s === 'sep') { bar.appendChild(el('span', { class: 'sep' })); return; }
+    const b = el('button', { type: 'button', title: s[1] + s[2] }, s[0]);
+    b.addEventListener('mousedown', e => e.preventDefault());
+    b.onclick = () => insertSnip(s[1], s[2]); bar.appendChild(b);
+  });
+}
+function insertSnip(pre, post){
+  const f = lastField; if (!f || f.disabled) return;
+  const st = f.selectionStart, en = f.selectionEnd, v = f.value;
+  f.value = v.slice(0, st) + pre + v.slice(st, en) + post + v.slice(en);
+  const pos = st + pre.length + (en - st);
+  f.focus(); f.setSelectionRange(pos, pos); f.dispatchEvent(new Event('input'));
+}
+
+/* ---------------- 손글씨 패드 ---------------- */
+const LW = 1000; // 논리 좌표 폭
+function Pad(canvas, ans, onChange){
+  this.cv = canvas; this.ans = ans; this.onChange = onChange; this.penOnly = false;
+  this.tool = { mode: 'pen', color: '#15181c', width: 3 }; this.redoStack = []; this.cur = null;
+  const ctx = canvas.getContext('2d'); this.ctx = ctx;
+  const pos = e => { const r = canvas.getBoundingClientRect(); const k = LW / r.width; return [Math.round((e.clientX - r.left) * k * 2) / 2, Math.round((e.clientY - r.top) * k * 2) / 2]; };
+  const down = e => {
+    if (S.locked) return;
+    if (this.penOnly && e.pointerType === 'touch') return;
+    e.preventDefault(); canvas.setPointerCapture(e.pointerId);
+    const p = pos(e);
+    if (this.tool.mode === 'eraser') { this.erasing = true; this.eraseAt(p); return; }
+    const w = this.tool.width * (e.pointerType === 'pen' && e.pressure ? (0.7 + e.pressure * 0.7) : 1);
+    this.cur = { c: this.tool.color, w: Math.round(w * 10) / 10, p: [p[0], p[1]] };
+    this.ans.strokes.push(this.cur); this.redoStack = []; this.render();
+  };
+  const move = e => {
+    if (this.erasing) { this.eraseAt(pos(e)); return; }
+    if (!this.cur) return; e.preventDefault();
+    const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
+    evs.forEach(ev => { const p = pos(ev); const n = this.cur.p.length; if (Math.abs(p[0] - this.cur.p[n - 2]) + Math.abs(p[1] - this.cur.p[n - 1]) >= 1.5) this.cur.p.push(p[0], p[1]); });
+    this.render();
+  };
+  const up = () => { if (this.cur || this.erasing) { this.cur = null; this.erasing = false; this.onChange(); } };
+  canvas.addEventListener('pointerdown', down); canvas.addEventListener('pointermove', move);
+  canvas.addEventListener('pointerup', up); canvas.addEventListener('pointercancel', up); canvas.addEventListener('pointerleave', up);
+  this.ro = new ResizeObserver(() => this.resize()); this.ro.observe(canvas);
+  this.resize();
+}
+Pad.prototype.resize = function(){
+  const r = this.cv.getBoundingClientRect(); if (!r.width) return;
+  const h = (this.ans.pad_height || 600) * r.width / LW; this.cv.style.height = h + 'px';
+  const dpr = window.devicePixelRatio || 1; this.cv.width = Math.round(r.width * dpr); this.cv.height = Math.round(h * dpr);
+  this.scale = r.width / LW * dpr; this.render();
+};
+Pad.prototype.render = function(){ drawStrokes(this.ctx, this.cv.width, this.cv.height, this.scale, this.ans.strokes, this.ans.pad_height || 600); };
+Pad.prototype.eraseAt = function(p){
+  const R = 14, before = this.ans.strokes.length;
+  this.ans.strokes = this.ans.strokes.filter(s => { for (let i = 0; i < s.p.length; i += 2) if (Math.hypot(s.p[i] - p[0], s.p[i + 1] - p[1]) < R + s.w) return false; return true; });
+  if (this.ans.strokes.length !== before) { this.render(); }
+};
+Pad.prototype.undo = function(){ const s = this.ans.strokes.pop(); if (s) { this.redoStack.push(s); this.render(); this.onChange(); } };
+Pad.prototype.redo = function(){ const s = this.redoStack.pop(); if (s) { this.ans.strokes.push(s); this.render(); this.onChange(); } };
+Pad.prototype.clear = function(){ if (!this.ans.strokes.length) return; this.redoStack = this.ans.strokes.slice().reverse(); this.ans.strokes.length = 0; this.render(); this.onChange(); };
+function drawStrokes(ctx, W, H, k, strokes, padH){
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, W, H); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
+  ctx.setTransform(k, 0, 0, k, 0, 0);
+  ctx.strokeStyle = '#eef0f3'; ctx.lineWidth = 1;
+  for (let y = 40; y < padH; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(LW, y); ctx.stroke(); }
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  (strokes || []).forEach(s => {
+    const p = s.p; ctx.strokeStyle = s.c; ctx.lineWidth = s.w; ctx.beginPath();
+    if (p.length <= 2) { ctx.fillStyle = s.c; ctx.arc(p[0], p[1], s.w / 2, 0, 7); ctx.fill(); return; }
+    ctx.moveTo(p[0], p[1]);
+    for (let i = 2; i < p.length - 2; i += 2) { const mx = (p[i] + p[i + 2]) / 2, my = (p[i + 1] + p[i + 3]) / 2; ctx.quadraticCurveTo(p[i], p[i + 1], mx, my); }
+    ctx.lineTo(p[p.length - 2], p[p.length - 1]); ctx.stroke();
+  });
+}
+function buildPadTools(box, pad){
+  const items = [];
+  const mk = (html, title, fn, pressed) => { const b = el('button', { class: 'tool', type: 'button', title, 'aria-pressed': pressed == null ? null : String(pressed) }, html); if (pressed == null) b.removeAttribute('aria-pressed'); b.onclick = fn; box.appendChild(b); return b; };
+  const colors = [['#15181c', '검정'], ['#1f4e8c', '파랑'], ['#b3261e', '빨강']];
+  const colorBtns = colors.map(([c, n], i) => mk(`<span class="sw" style="background:${c}"></span>`, n + ' 펜', () => { pad.tool.mode = 'pen'; pad.tool.color = c; sync(); }, i === 0));
+  box.appendChild(el('span', { class: 'sep', style: 'width:1px;height:26px;background:var(--rule);margin:0 4px' }));
+  const widths = [[2, 4], [3, 6], [5, 9]];
+  const wBtns = widths.map(([w, d], i) => mk(`<span class="dotw" style="width:${d}px;height:${d}px"></span>`, '굵기', () => { pad.tool.width = w; if (pad.tool.mode === 'eraser') pad.tool.mode = 'pen'; sync(); }, i === 1));
+  box.appendChild(el('span', { class: 'sep', style: 'width:1px;height:26px;background:var(--rule);margin:0 4px' }));
+  const er = mk(ICON.eraser + '지우개', '지우개 (획 단위)', () => { pad.tool.mode = 'eraser'; sync(); }, false);
+  mk(ICON.undo, '되돌리기', () => pad.undo()); mk(ICON.redo, '다시 하기', () => pad.redo());
+  mk(ICON.trash + '모두 지우기', '모두 지우기', () => confirmBox('모두 지울까요?', '이 문항의 손글씨를 모두 지웁니다. (되돌리기로 복구할 수 있어요)', '모두 지우기', () => pad.clear()));
+  function sync(){
+    colorBtns.forEach((b, i) => b.setAttribute('aria-pressed', String(pad.tool.mode === 'pen' && pad.tool.color === colors[i][0])));
+    wBtns.forEach((b, i) => b.setAttribute('aria-pressed', String(pad.tool.width === widths[i][0])));
+    er.setAttribute('aria-pressed', String(pad.tool.mode === 'eraser'));
+    pad.cv.style.cursor = pad.tool.mode === 'eraser' ? 'cell' : 'crosshair';
+  }
+  sync();
+}
+
+/* ---------------- 저장 ---------------- */
+function markDirty(qno){
+  S.dirty.add(qno); setStatus('saving');
+  const b = LS.get(backupKey(), {}); b[qno] = Object.assign({}, S.answers[qno], { _t: Date.now() }); delete b[qno].updated_at; LS.set(backupKey(), b);
+  clearTimeout(markDirty._t); markDirty._t = setTimeout(flush, 1200);
+}
+async function flush(){
+  if (S.saving || !S.dirty.size || !S.student || S.locked) { if (!S.dirty.size && !S.saving) setStatus(S.online ? 'ok' : 'off'); return; }
+  S.saving = true; const list = [...S.dirty]; S.dirty.clear();
+  try {
+    for (const qno of list) {
+      const a = S.answers[qno];
+      await DB.saveAnswer(S.student.id, qno, { final_answer: a.final_answer, typed: a.typed, strokes: a.strokes, pad_height: a.pad_height, mode: a.mode, hint_level: a.hint_level });
+    }
+    S.online = true; setStatus(S.dirty.size ? 'saving' : 'ok');
+  } catch(e) {
+    console.warn(e); list.forEach(q => S.dirty.add(q)); S.online = false; setStatus('off');
+  } finally { S.saving = false; }
+}
+function setStatus(st){
+  const b = $('#status'); if (!b) return;
+  b.className = 'status' + (st === 'saving' ? ' saving' : st === 'off' ? ' off' : '');
+  const t = new Date(); const hh = String(t.getHours()).padStart(2, '0'), mm = String(t.getMinutes()).padStart(2, '0');
+  b.querySelector('span').textContent = st === 'saving' ? '저장 중…' : st === 'off' ? '연결 끊김 — 기기에 임시 저장' : `저장됨 ${hh}:${mm}`;
+}
+async function heartbeat(){
+  if (!S.student) return;
+  try { await DB.heartbeat(S.student.id, S.cur); if (!S.online) { S.online = true; flush(); } } catch(e) { S.online = false; setStatus('off'); }
+}
+
+/* ---------------- 접속·이탈 기록 ---------------- */
+function watchPresence(){
+  let awayAt = null, timer = null;
+  const leave = why => { if (awayAt) return; clearTimeout(timer); timer = setTimeout(() => { awayAt = Date.now() - (why === 'hidden' ? 0 : 2500); DB.logEvent(S.student.id, 'leave', { qno: S.cur, why }).catch(()=>{}); }, why === 'hidden' ? 0 : 2500); };
+  const back = () => { clearTimeout(timer); if (!awayAt) return; const sec = Math.round((Date.now() - awayAt) / 1000); awayAt = null; DB.logEvent(S.student.id, 'return', { qno: S.cur, seconds: sec }).catch(()=>{}); heartbeat(); };
+  document.addEventListener('visibilitychange', () => { if (document.hidden) { flush(); leave('hidden'); } else back(); });
+  window.addEventListener('blur', () => leave('blur'));
+  window.addEventListener('focus', back);
+  window.addEventListener('online', () => { DB.logEvent(S.student.id, 'online', {}).catch(()=>{}); flush(); });
+  window.addEventListener('offline', () => { S.online = false; setStatus('off'); });
+  window.addEventListener('pagehide', () => { flush(); });
+}
+
+/* ---------------- 제출 ---------------- */
+function askSubmit(){
+  flush();
+  const n = EXAM.units[S.unit].questions.filter(q => hasWork(S.answers[q.no])).length;
+  const blank = 10 - n;
+  confirmBox('답안을 제출할까요?', `작성한 문항 <b>${n}</b>개${blank ? `, 비어 있는 문항 <b>${blank}</b>개` : ''}. 제출하면 더 이상 고칠 수 없습니다.`, '제출하기', async () => {
+    try { await flush(); S.locked = true; S.student = await DB.submit(S.student.id); await DB.logEvent(S.student.id, 'submit', { answered: n }).catch(()=>{}); showDone(); }
+    catch(e) { S.locked = false; alert('제출하지 못했습니다. 인터넷 연결을 확인하고 다시 눌러 주세요.\n' + (e.message || e)); }
+  });
+}
+function showDone(){
+  S.locked = true;
+  $('#login').style.display = 'none'; $('#exam').style.display = 'none'; $('#done').style.display = 'flex';
+  const d = S.student.submitted_at ? new Date(S.student.submitted_at) : new Date();
+  $('#done-sub').textContent = `${S.student.student_no} ${S.student.name} · ${EXAM.units[S.unit].name} · ${d.toLocaleString('ko-KR')} 제출`;
+  const g = $('#sumgrid'); g.innerHTML = '';
+  for (let i = 1; i <= 10; i++) g.appendChild(el('div', { class: hasWork(S.answers[i]) ? 'has' : '' }, String(i)));
+}
+
+/* ---------------- 공용 모달 ---------------- */
+function confirmBox(title, body, okText, onOk){
+  $('#m-title').textContent = title; $('#m-body').innerHTML = body;
+  const row = $('#m-row'); row.innerHTML = '';
+  const c = el('button', { class: 'btn', type: 'button' }, '취소'); c.onclick = () => $('#modal').classList.remove('open');
+  const o = el('button', { class: 'btn primary', type: 'button' }, okText); o.onclick = () => { $('#modal').classList.remove('open'); onOk(); };
+  row.append(c, o); $('#modal').classList.add('open'); o.focus();
+}
+
+buildLogin();
+})();
+</script>
+</body>
+</html>
